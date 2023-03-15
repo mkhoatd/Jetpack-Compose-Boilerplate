@@ -8,9 +8,8 @@ import com.aregyan.compose.network.model.asDatabaseModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
-import javax.inject.Inject
 
-class UsersRepository @Inject constructor(
+class UsersRepository constructor(
     private val usersApi: UsersApi,
     private val appDatabase: AppDatabase
 ) {

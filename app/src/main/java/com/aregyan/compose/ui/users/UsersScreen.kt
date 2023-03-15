@@ -11,16 +11,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.aregyan.compose.domain.User
 import com.aregyan.compose.ui.components.NoNetwork
+import org.koin.androidx.compose.getViewModel
 
 @Composable
 fun UsersScreen(
     onUserClick: (String) -> Unit
 ) {
-    val viewModel = hiltViewModel<UsersViewModel>()
+    val viewModel = getViewModel<UsersViewModel>()
     val uiState = viewModel.uiState
 
     if (uiState.offline) {
