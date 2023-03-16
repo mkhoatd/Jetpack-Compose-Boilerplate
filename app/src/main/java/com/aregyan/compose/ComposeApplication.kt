@@ -11,7 +11,7 @@ class ComposeApplication : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@ComposeApplication)
-            modules(appModule)
+            modules(dogAppModule)
         }
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
