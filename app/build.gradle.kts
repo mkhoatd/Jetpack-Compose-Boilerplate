@@ -2,7 +2,9 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.7.10"
+    id("kotlin-parcelize")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.0"
+    id("com.google.devtools.ksp") version "1.8.0-1.0.9"
 }
 
 android {
@@ -24,7 +26,11 @@ android {
     buildTypes {
         named("release") {
             isMinifyEnabled = false
-            setProguardFiles(listOf(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"))
+            setProguardFiles(
+                listOf(
+                    getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+                )
+            )
         }
     }
     compileOptions {
@@ -83,7 +89,6 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
 
 
-
     //==================== Database ====================
     val room_version = "2.5.0"
     implementation("androidx.room:room-runtime:$room_version")
@@ -105,6 +110,9 @@ dependencies {
 
     //==================== Navigation ====================
     implementation("androidx.navigation:navigation-compose:2.5.3")
+    val cdes_version = "1.7.36-beta"
+    implementation("io.github.raamcosta.compose-destinations:core:$cdes_version")
+    ksp("io.github.raamcosta.compose-destinations:ksp:$cdes_version")
 
     //==================== Memory val Detection: Leak = ===================
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.9.1")

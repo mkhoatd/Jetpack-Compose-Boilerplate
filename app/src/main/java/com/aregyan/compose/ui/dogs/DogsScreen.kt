@@ -1,5 +1,10 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.aregyan.compose.ui.dogs
 
+import android.util.Log
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -9,23 +14,38 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.aregyan.compose.domain.Dog
+import com.aregyan.compose.ui.dogs.destinations.DogDetailScreenDestination
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.koin.androidx.compose.getViewModel
 
+
 @OptIn(ExperimentalMaterial3Api::class)
+@DogsAppNavGraph(start = true)
+@Destination
 @Composable
-fun DogScreen() {
+fun DogScreen(
+    destinationsNavigator: DestinationsNavigator
+) {
     val viewModel = getViewModel<DogsViewModel>()
     val uiState = viewModel.uiState.collectAsState()
+    val searchedList by remember {
+        derivedStateOf {
+            if (uiState.value.searchText == "") uiState.value.dogList
+            uiState.value.dogList.filter { it.name.contains(uiState.value.searchText) }
+        }
+    }
     Scaffold(
         topBar = {
             DogAppBar(viewModel, uiState.value)
@@ -34,7 +54,7 @@ fun DogScreen() {
     ) {
         Box(modifier = Modifier.padding(it)) {
             DogsGrid(
-                uiState.value.getSearchList()
+                destinationsNavigator, searchedList
             )
         }
     }
@@ -42,6 +62,7 @@ fun DogScreen() {
 
 @Composable
 fun DogsGrid(
+    destinationsNavigator: DestinationsNavigator,
     dogsDisplayList: List<Dog>
 ) {
 
@@ -49,7 +70,7 @@ fun DogsGrid(
         columns = GridCells.Fixed(2), contentPadding = PaddingValues(16.dp)
     ) {
         items(dogsDisplayList) {
-            DogItem(item = it)
+            DogItem(destinationsNavigator, item = it)
         }
     }
 
@@ -147,7 +168,7 @@ fun SearchAppBar(
 
 
 @Composable
-fun DogItem(item: Dog) {
+fun DogItem(destinationsNavigator: DestinationsNavigator, item: Dog) {
     OutlinedCard(
         modifier = Modifier
             .padding(8.dp)
@@ -159,41 +180,111 @@ fun DogItem(item: Dog) {
             containerColor = Color.White,
             contentColor = MaterialTheme.colorScheme.onSurface,
         )
-
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+        var click by remember { mutableStateOf(false) }
+        when (click) {
+            false -> DogCardFront(destinationsNavigator,
+                item,
+                onClick = { click = true; Log.d("click", "$click") })
+            true -> DogCardBack(item, onClick = { click = false })
+        }
+    }
+
+}
+
+@Composable
+fun DogCardBack(item: Dog, onClick: () -> Unit = {}) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .clickable { onClick() },
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            AsyncImage(
-                modifier = Modifier.size(100.dp),
-                model = item.url,
-                contentDescription = null,
-            )
-            Row(
-                modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceBetween
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .fillMaxHeight()
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .fillMaxHeight()
-                ) {
-                    Text(
-                        text = item.name,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        text = item.origin,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                Icon(
-                    Icons.Outlined.Favorite, contentDescription = "Like"
+                Text(
+                    text = "Name",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Light,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Text(
+                    text = item.name,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.displaySmall
+                )
+                Text(
+                    text = "Origin",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Light,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Text(
+                    text = item.origin,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.displaySmall,
                 )
             }
+            Icon(
+                Icons.Outlined.FavoriteBorder,
+                contentDescription = "Favorite",
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun DogCardFront(
+    destinationsNavigator: DestinationsNavigator, item: Dog, onClick: () -> Unit = {}
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = {onClick()},
+                    onDoubleTap = {
+                        val navArgs = DogDetailScreenDestination.NavArgs(item.id)
+                        destinationsNavigator.navigate(DogDetailScreenDestination(navArgs))}
+                )
+            },
+    ) {
+        AsyncImage(
+            modifier = Modifier.size(100.dp),
+            model = item.url,
+            contentDescription = null,
+        )
+        Row(
+            modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .fillMaxHeight()
+            ) {
+                Text(
+                    text = item.name,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    text = item.origin,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Icon(
+                Icons.Outlined.FavoriteBorder, contentDescription = "Like"
+            )
         }
     }
 }

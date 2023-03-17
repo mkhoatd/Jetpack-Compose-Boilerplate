@@ -38,11 +38,17 @@ data class Weight(
 
 fun List<DogApiModel>.asDomainModel(): List<Dog> {
     return map {
-        val name: String = it.name ?: ""
-        val origin: String = it.origin ?: ""
-        val url: String = it.url ?: ""
         Dog(
-            name, origin, url
+            name = it.name ?: "",
+            origin = it.origin ?: "",
+            url = it.url ?: "",
+            lifeSpan = it.lifeSpan ?: "",
+            bredFor = it.bredFor ?: "",
+            breedGroup = it.breedGroup ?: "",
+            temperament = it.temperament ?: "",
+            id = it.id ?: 0,
+            height = it.height?.metric ?: "",
+            weight = it.weight?.metric ?: ""
         )
     }
 }

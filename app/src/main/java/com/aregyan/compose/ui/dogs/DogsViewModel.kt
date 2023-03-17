@@ -21,9 +21,6 @@ class DogsViewModel(
                 searchText = text
             )
         }
-        Log.d("DogsViewModel", "search: $text")
-        Log.d("DogsViewModel", "search: ${uiState.value.getSearchList()}")
-//        Log.d("DogsViewModel", "search: ${uiState.value.dogList.filter { it.name.contains(text) }}")
     }
 
     fun toggleSearch() {
